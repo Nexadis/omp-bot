@@ -1,0 +1,47 @@
+package logistic
+
+import (
+	"log"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/ozonmp/omp-bot/internal/app/commands/logistic/pkg"
+	"github.com/ozonmp/omp-bot/internal/app/path"
+)
+
+type Commander interface {
+	HandleCallback(callback *tgbotapi.CallbackQuery, callbackPath path.CallbackPath)
+	HandleCommand(message *tgbotapi.Message, commandPath path.CommandPath)
+}
+
+type LogisticCommander struct {
+	bot              *tgbotapi.BotAPI
+	packageCommander Commander
+}
+
+func NewLogisticCommander(
+	bot *tgbotapi.BotAPI,
+) *LogisticCommander {
+	return &LogisticCommander{
+		bot: bot,
+		// subdomainCommander
+		packageCommander: pkg.NewLogisticPackageCommander(bot),
+	}
+}
+
+func (c *LogisticCommander) HandleCallback(callback *tgbotapi.CallbackQuery, callbackPath path.CallbackPath) {
+	switch callbackPath.Subdomain {
+	case "package":
+		c.packageCommander.HandleCallback(callback, callbackPath)
+	default:
+		log.Printf("LogisticCommander.HandleCallback: unknown subdomain - %s", callbackPath.Subdomain)
+	}
+}
+
+func (c *LogisticCommander) HandleCommand(msg *tgbotapi.Message, commandPath path.CommandPath) {
+	switch commandPath.Subdomain {
+	case "package":
+		c.packageCommander.HandleCommand(msg, commandPath)
+	default:
+		log.Printf("LogisticCommander.HandleCommand: unknown subdomain - %s", commandPath.Subdomain)
+	}
+}
